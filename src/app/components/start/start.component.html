@@ -1,0 +1,49 @@
+<div class="d-flex flex-column flex-grow-1">
+
+<nav class="navbar app-navbar sticky-top">
+  <div class="container-lg">
+    <span class="navbar-brand">Protokollschreiber</span>
+  </div>
+</nav>
+
+<div class="container-lg py-5 flex-grow-1">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold mb-2" style="color: var(--rot);">Protokollschreiber</h1>
+    <p class="text-muted">Sitzungsprotokoll und Pendenzenverwaltung</p>
+  </div>
+  <div class="row g-3 justify-content-center">
+    <div class="col-sm-6 col-md-4">
+      <div class="card text-center start-option h-100" (click)="neuAnhandVorlage()">
+        <div class="card-body py-4">
+          <div class="icon mb-2">📄</div>
+          <h5 class="card-title fw-bold">Neu anhand Vorlage</h5>
+          <p class="card-text text-muted small">Leeres Protokoll starten</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+      <div class="card text-center start-option h-100" (click)="triggerImport()">
+        <div class="card-body py-4">
+          <div class="icon mb-2">📂</div>
+          <h5 class="card-title fw-bold">JSON einlesen</h5>
+          <p class="card-text text-muted small">Bestehendes Protokoll laden</p>
+        </div>
+      </div>
+    </div>
+    @if (hasData) {
+      <div class="col-sm-6 col-md-4">
+        <div class="card text-center start-option h-100" (click)="fortfahren()">
+          <div class="card-body py-4">
+            <div class="icon mb-2">▶</div>
+            <h5 class="card-title fw-bold">Fortfahren</h5>
+            <p class="card-text text-muted small">Letzten Stand laden</p>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+</div>
+
+<input type="file" id="jsonImportInput" accept=".json" (change)="importJSON($event)" style="display:none">

@@ -1,0 +1,251 @@
+<div class="container-lg py-4">
+
+  <!-- Sitzungsdetails -->
+  <div class="card mb-3 section-card" [class.collapsed]="collapsed['sitzung']">
+    <div class="card-header section-card-header" (click)="toggleSection('sitzung')">
+      <span>Sitzungsdetails</span>
+      <span class="section-toggle">▼</span>
+    </div>
+    @if (!collapsed['sitzung']) {
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Untertitel</label>
+            <input type="text" class="form-control form-control-sm" [value]="state.meta.untertitel"
+              (change)="updateMeta('untertitel', $any($event.target).value)"
+              placeholder="z.B. 3. Vorstandssitzung 2026">
+          </div>
+          <div class="col-12">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold text-uppercase text-secondary">Datum</label>
+                <input type="date" class="form-control form-control-sm" [value]="state.meta.datum"
+                  [class.has-value]="state.meta.datum"
+                  (change)="updateMeta('datum', $any($event.target).value)">
+              </div>
+              <div class="col-md-2"></div>
+              <div class="col-md-3 d-flex align-items-center gap-3">
+                <label class="form-label small fw-semibold text-uppercase text-secondary mb-0">Von</label>
+                <app-time-input [value]="state.meta.zeitVon"
+                  (valueChange)="updateMeta('zeitVon', $event)" />
+              </div>
+              <div class="col-md-3 d-flex align-items-center gap-3">
+                <label class="form-label small fw-semibold text-uppercase text-secondary mb-0">Bis</label>
+                <app-time-input [value]="state.meta.zeitBis"
+                  (valueChange)="updateMeta('zeitBis', $event)" />
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Ort</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="state.meta.ort"
+              [ngbTypeahead]="searchOrte"
+              (focus)="focusOrt$.next($any($event.target).value)"
+              (selectItem)="updateMeta('ort', $event.item); addOrtToList($event.item)"
+              (change)="updateMeta('ort', $any($event.target).value); addOrtToList($any($event.target).value)"
+              placeholder="Sitzungsort">
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Vorstand -->
+  <div class="card mb-3 section-card" [class.collapsed]="collapsed['vorstand']">
+    <div class="card-header section-card-header" (click)="toggleSection('vorstand')">
+      <span>Vorstand</span>
+      <span class="section-toggle">▼</span>
+    </div>
+    @if (!collapsed['vorstand']) {
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm mb-0 member-table" cdkDropList (cdkDropListDropped)="dropVorstand($event)">
+            <thead class="table-light">
+              <tr>
+                <th style="width:32px;"></th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>Kürzel</th>
+                <th>Funktion/Ressort</th>
+                <th>Teilnahme</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of state.vorstand; track $index; let i = $index) {
+                <tr cdkDrag>
+                  <td><span class="drag-handle" cdkDragHandle tabindex="-1">⣿</span></td>
+                  <td><input type="text" [value]="v.vorname"
+                    (change)="updateVorstand(i, 'vorname', $any($event.target).value)"></td>
+                  <td><input type="text" [value]="v.nachname"
+                    (change)="updateVorstand(i, 'nachname', $any($event.target).value)"></td>
+                  <td><input type="text" [value]="v.kuerzel"
+                    (change)="updateVorstand(i, 'kuerzel', $any($event.target).value)"></td>
+                  <td>
+                    <app-tag-input [values]="v.funktion"
+                      (valuesChange)="updateVorstand(i, 'funktion', $event)"
+                      [getSuggestions]="getFunktionSuggestions"
+                      placeholder="Funktion/Ressort" />
+                  </td>
+                  <td>
+                    <app-status-switch [value]="v.status"
+                      (valueChange)="updateVorstand(i, 'status', $event)" />
+                  </td>
+                  <td class="text-center">
+                    <button class="btn-icon" tabindex="-1" (click)="removeVorstandMitglied(i)" title="Mitglied entfernen">✕</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="p-2">
+          <button class="btn-add" (click)="addVorstandMitglied()">+ Mitglied hinzufügen</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Gäste -->
+  <div class="card mb-3 section-card" [class.collapsed]="collapsed['gaeste']">
+    <div class="card-header section-card-header" (click)="toggleSection('gaeste')">
+      <span>Gäste</span>
+      <span class="section-toggle">▼</span>
+    </div>
+    @if (!collapsed['gaeste']) {
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm mb-0 member-table" cdkDropList (cdkDropListDropped)="dropGaeste($event)">
+            <thead class="table-light">
+              <tr>
+                <th style="width:32px;"></th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>Kürzel</th>
+                <th>Funktion/Ressort</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (g of state.gaeste; track $index; let i = $index) {
+                <tr cdkDrag>
+                  <td><span class="drag-handle" cdkDragHandle tabindex="-1">⣿</span></td>
+                  <td><input type="text" [value]="g.vorname"
+                    (change)="updateGast(i, 'vorname', $any($event.target).value)"></td>
+                  <td><input type="text" [value]="g.nachname"
+                    (change)="updateGast(i, 'nachname', $any($event.target).value)"></td>
+                  <td><input type="text" [value]="g.kuerzel"
+                    (change)="updateGast(i, 'kuerzel', $any($event.target).value)"></td>
+                  <td>
+                    <app-tag-input [values]="g.funktion"
+                      (valuesChange)="updateGast(i, 'funktion', $event)"
+                      [getSuggestions]="getFunktionSuggestions"
+                      placeholder="Funktion/Ressort" />
+                  </td>
+                  <td class="text-center">
+                    <button class="btn-icon" tabindex="-1" (click)="removeGast(i)" title="Gast entfernen">✕</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="p-2">
+          <button class="btn-add" (click)="addGast()">+ Gast hinzufügen</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Protokollführung -->
+  <div class="card mb-3 section-card" [class.collapsed]="collapsed['protokollfuehrung']">
+    <div class="card-header section-card-header" (click)="toggleSection('protokollfuehrung')">
+      <span>Protokollführung</span>
+      <span class="section-toggle">▼</span>
+    </div>
+    @if (!collapsed['protokollfuehrung']) {
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Ort</label>
+            <input type="text" class="form-control form-control-sm" [value]="state.meta.protokollfuehrung.ort"
+              list="orte-list-pf"
+              (change)="updateProtokollfuehrung('ort', $any($event.target).value)">
+            <datalist id="orte-list-pf">
+              @for (o of state.settings.orte; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </datalist>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Datum</label>
+            <input type="date" class="form-control form-control-sm" [value]="state.meta.protokollfuehrung.datum"
+              [class.has-value]="state.meta.protokollfuehrung.datum"
+              (change)="updateProtokollfuehrung('datum', $any($event.target).value)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Name</label>
+            <div class="tag-container">
+              @for (val of state.meta.protokollfuehrung.name ? [state.meta.protokollfuehrung.name] : []; track val) {
+                <span class="tag" @badgeSwap>
+                  {{ val }}
+                  <button class="tag-remove" type="button" tabindex="-1" (click)="clearProtokollfuehrender(); $event.stopPropagation()">×</button>
+                </span>
+              }
+              <div style="position:relative;flex:1;min-width:80px;">
+                <input type="text" class="tag-input"
+                  [(ngModel)]="protokollfuehrendInputValue"
+                  [ngbTypeahead]="searchProtokollfuehrender"
+                  [resultFormatter]="protokollfuehrendFormatter"
+                  container="body"
+                  (focus)="focusProtokollfuehrender$.next($any($event.target).value)"
+                  (selectItem)="onSelectProtokollfuehrender($event)"
+                  (blur)="onBlurProtokollfuehrender()"
+                  autocomplete="off"
+                  [placeholder]="state.meta.protokollfuehrung.name ? '' : 'Name auswählen…'">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Nächste Sitzung -->
+  <div class="card mb-3 section-card" [class.collapsed]="collapsed['naechsteSitzung']">
+    <div class="card-header section-card-header" (click)="toggleSection('naechsteSitzung')">
+      <span>Nächste Sitzung</span>
+      <span class="section-toggle">▼</span>
+    </div>
+    @if (!collapsed['naechsteSitzung']) {
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Datum</label>
+            <input type="date" class="form-control form-control-sm" [value]="state.meta.naechsteSitzung.datum"
+              [class.has-value]="state.meta.naechsteSitzung.datum"
+              (change)="updateNaechsteSitzung('datum', $any($event.target).value)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Uhrzeit</label>
+            <input type="time" class="form-control form-control-sm" [value]="state.meta.naechsteSitzung.uhrzeit"
+              (change)="updateNaechsteSitzung('uhrzeit', $any($event.target).value)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold text-uppercase text-secondary">Adresse</label>
+            <input type="text" class="form-control form-control-sm" [value]="state.meta.naechsteSitzung.adresse"
+              list="orte-list-ns"
+              (change)="updateNaechsteSitzung('adresse', $any($event.target).value)">
+            <datalist id="orte-list-ns">
+              @for (o of state.settings.orte; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </datalist>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>

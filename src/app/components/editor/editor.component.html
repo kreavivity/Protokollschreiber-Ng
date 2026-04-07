@@ -1,0 +1,48 @@
+<div class="editor-layout">
+<nav class="navbar app-navbar sticky-top">
+  <div class="container-lg">
+    <span class="navbar-brand" (click)="goToStart()"
+      ngbTooltip="Zur Startansicht" placement="bottom" container="body">Protokollschreiber</span>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" (click)="exportPDFAndJSON()"
+        ngbTooltip="Protokoll als PDF und JSON nacheinander herunterladen" placement="bottom" container="body">
+        ⬇ PDF + JSON
+      </button>
+      <button class="btn btn-sm btn-outline-light" (click)="exportJSON()"
+        ngbTooltip="Protokoll als JSON-Datei herunterladen (zum Wiederherstellen oder Archivieren)" placement="bottom" container="body">
+        ⬇ JSON
+      </button>
+      <button class="btn btn-sm btn-outline-light" (click)="openSettings()"
+        ngbTooltip="Einstellungen öffnen: Personen, Orte, Logo verwalten" placement="bottom" container="body">
+        ⚙ Einstellungen
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="editor-toolbar">
+  <div class="container-lg">
+    <div class="position-relative">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'protokoll'"
+            (click)="switchTab('protokoll')">Protokolldetails</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'pendenzen'"
+            (click)="switchTab('pendenzen')">Pendenzen
+            <span style="background:var(--rot);color:var(--weiss);font-size:10px;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle;">{{ pendenzCount() }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="editor-content">
+  <router-outlet />
+</div>
+
+</div>
+
+<div class="status-bar" [class.show]="saveVisible()"><span style="color:var(--gruen);">●</span> Gespeichert</div>

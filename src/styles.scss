@@ -1,0 +1,510 @@
+@use 'bootstrap/scss/bootstrap' with (
+  $danger: #8B1F1F
+);
+
+/* ── CSS CUSTOM PROPERTIES ──────────────────────────── */
+:root {
+  --rot: #8B1F1F;
+  --blau: #1a3a6b;
+  --gruen: #27ae60;
+  --grau-hell: #e8e8e8;
+  --grau-mittel: #aaaaaa;
+  --grau-dunkel: #666666; /*für Texte, Buttons, etc.*/
+  --dunkel: #333333;
+  --text: #1a1a1a;
+  --weiss: #ffffff;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--grau-hell);
+}
+
+/* ── APP LAYOUT ─────────────────────────────────────── */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout > footer {
+  margin-top: auto;
+}
+
+/* ── EDITOR LAYOUT ──────────────────────────────────── */
+.editor-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.editor-content {
+  flex: 1;
+}
+
+/* ── NAVBAR ─────────────────────────────────────────── */
+.app-navbar {
+  background: var(--rot);
+}
+.app-navbar .navbar-brand {
+  font-weight: bold;
+  font-size: 22px;
+  color: var(--weiss);
+  cursor: pointer;
+}
+.app-navbar .navbar-brand:hover { color: rgba(255,255,255,0.85); }
+
+/* ── EDITOR TOOLBAR ─────────────────────────────────── */
+.editor-toolbar {
+  position: sticky;
+  top: 54px;
+  z-index: 1019;
+  background: var(--weiss);
+  border-bottom: 1px solid var(--grau-hell);
+}
+.auto-save-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--grau-mittel);
+  pointer-events: none;
+}
+
+/* ── NAV-TABS RED ACCENT ────────────────────────────── */
+.nav-tabs .nav-link { color: var(--grau-dunkel); border: none; border-bottom: 3px solid transparent; padding: 12px 20px; border-radius: 0; }
+.nav-tabs .nav-link:hover { color: var(--rot); border-bottom-color: rgba(139,31,31,0.3); }
+.nav-tabs .nav-link.active { color: var(--rot); border-bottom: 3px solid var(--rot); background: none; font-weight: 600; }
+.nav-tabs { border-bottom: none; }
+
+/* ── FORM BORDERS ───────────────────────────────────── */
+.form-control, .form-select {
+  border-color: var(--grau-mittel);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--rot);
+  box-shadow: 0 0 0 0.2rem rgba(139,31,31,0.15);
+}
+
+/* ── DATE INPUT TRANSPARENCY ────────────────────────── */
+input[type="date"]::-webkit-datetime-edit { color: transparent; }
+input[type="date"]:focus::-webkit-datetime-edit,
+input[type="date"].has-value::-webkit-datetime-edit { color: var(--text); }
+
+/* ── SECTION CARDS ──────────────────────────────────── */
+.section-card > .card-header,
+.section-card-header {
+  background: var(--rot);
+  color: var(--weiss);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-weight: bold;
+  font-size: 13px;
+}
+.section-card > .card-header:hover,
+.section-card-header:hover { background: var(--rot); }
+.section-toggle {
+  font-size: 14px;
+  opacity: 0.8;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.section-card.collapsed .section-toggle { transform: rotate(-90deg); }
+
+/* ── MEMBER TABLE ───────────────────────────────────── */
+.member-table td input,
+.member-table td select {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 3px 6px;
+  &:focus {
+    background: var(--weiss);
+    outline: 1px solid var(--rot);
+    border-radius: 2px;
+  }
+}
+
+/* ── DRAG HANDLE ────────────────────────────────────── */
+.drag-handle {
+  cursor: grab;
+  color: var(--grau-mittel);
+  font-size: 15px;
+  padding: 0 6px;
+  user-select: none;
+  text-align: center;
+  &:active { cursor: grabbing; }
+}
+
+/* ── STATUS SWITCH ──────────────────────────────────── */
+.status-switch { display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; }
+.status-switch-track {
+  position: relative; width: 36px; height: 20px; border-radius: 10px;
+  background: var(--rot); transition: background 0.2s; flex-shrink: 0;
+  &.anwesend { background: var(--gruen); }
+}
+.status-switch-thumb {
+  position: absolute; top: 3px; left: 19px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--weiss); transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  .status-switch-track.anwesend & { left: 3px; }
+}
+.status-switch-label { font-size: 12px; font-weight: 600; color: var(--gruen); }
+.status-switch-label.entschuldigt { color: var(--rot); }
+
+/* ── BUTTONS ────────────────────────────────────────── */
+.btn-add {
+  background: none;
+  border: 1px dashed var(--rot);
+  border-radius: 4px;
+  color: var(--rot);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+  margin-top: 6px;
+  &:hover { background: var(--rot); color: var(--weiss); }
+}
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background 0.15s;
+  color: var(--grau-mittel);
+  &:hover { background: var(--grau-hell); color: var(--rot); }
+}
+
+/* ── CUSTOM OUTLINE BUTTONS ─────────────────────────── */
+.btn-outline-blau {
+  color: var(--blau);
+  border-color: var(--blau);
+  background: transparent;
+  &:hover, &:active, &:focus { background: var(--blau); border-color: var(--blau); color: var(--weiss); }
+}
+
+/* ── PENDENZ CARD ───────────────────────────────────── */
+.pendenz-card {
+  border-left: 5px solid var(--rot);
+  overflow: hidden;
+  &.erledigt { border-left-color: var(--blau); }
+  &.archiviert { border-left-color: var(--grau-mittel); }
+}
+.pendenz-card .card-header,
+.pendenz-card-header {
+  background: var(--rot);
+  color: var(--weiss);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 0;
+}
+.pendenz-card.erledigt .card-header,
+.pendenz-card.erledigt .pendenz-card-header { background: var(--blau); }
+.pendenz-card.archiviert .card-header,
+.pendenz-card.archiviert .pendenz-card-header { background: var(--grau-mittel); }
+
+.pendenz-header-input {
+  background: transparent;
+  border: none;
+  color: var(--weiss);
+  font-weight: bold;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  &::placeholder { color: rgba(255,255,255,0.6); }
+  &:focus { outline: none; border-bottom: 1px solid rgba(255,255,255,0.5); }
+}
+.pendenz-id {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pendenz-card.archiviert {
+  .card-body input, .card-body textarea, .tag-container {
+    background: var(--grau-hell);
+    color: var(--grau-mittel);
+    pointer-events: none;
+    border-color: var(--grau-mittel);
+  }
+  .tag { background: var(--grau-mittel); color: var(--grau-mittel); }
+  .btn-add { display: none; }
+  .eintrag-preview { background: var(--grau-hell); color: var(--text); border-color: var(--grau-mittel); }
+}
+
+/* ── BADGES ─────────────────────────────────────────── */
+.badge-open { background: var(--weiss); color: var(--rot); border: 1px solid var(--rot); font-size: 11px; }
+.badge-done { background: var(--weiss); color: var(--blau); border: 1px solid var(--blau); font-size: 11px; }
+.badge-archiv { background: var(--weiss); color: var(--grau-dunkel); border: 1px solid var(--grau-mittel); font-size: 11px; }
+.badge-header { flex-shrink: 0; }
+
+/* ── FILTER BUTTONS ─────────────────────────────────── */
+.filter-btn { border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+/* ── EINTRAG LABEL ROW ──────────────────────────────── */
+.eintrag-label-row {
+  height: 26px;
+}
+
+/* ── EINTRAG DATE ───────────────────────────────────── */
+.eintrag-datum {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ── PENDENZ TOOLBAR ────────────────────────────────── */
+.pendenz-toolbar {
+  position: sticky;
+  top: 98px;
+  z-index: 1018;
+  background: var(--grau-hell);
+  border-bottom: 1px solid var(--grau-mittel);
+}
+
+/* ── TAG INPUT ──────────────────────────────────────── */
+.tag-container {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  border: 1px solid var(--grau-mittel); border-radius: 4px;
+  padding: 4px 8px; min-height: 36px; background: var(--weiss); cursor: text;
+  transition: border-color 0.15s;
+  &:focus-within { border-color: var(--rot); box-shadow: 0 0 0 0.2rem rgba(139,31,31,0.15); }
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--rot); color: var(--weiss);
+  border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: 600;
+}
+.tag-remove {
+  background: none; border: none; color: rgba(255,255,255,0.75);
+  cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
+  &:hover { color: var(--weiss); }
+}
+.tag-input {
+  border: none; outline: none; font-size: 12px;
+  min-width: 80px; flex: 1; padding: 2px 0; background: transparent;
+  font-family: inherit;
+}
+
+/* ── START OPTIONS ──────────────────────────────────── */
+.start-option {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid var(--rot) !important;
+  .icon { font-size: 36px; }
+  &:hover {
+    background: var(--rot) !important;
+    color: var(--weiss) !important;
+  }
+  &:hover p { color: rgba(255,255,255,0.8) !important; }
+}
+
+/* ── PENDENZ SIDEBAR ─────────────────────────────────── */
+.pendenz-layout {
+  display: flex;
+  align-items: flex-start;
+  &.pendenz-layout--has-sidebar {
+    @media (min-width: 1400px) {
+      padding-right: 144px; // mirrors sidebar width → pendenz-content centers on full viewport
+    }
+  }
+}
+.pendenz-sidebar {
+  width: 144px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 185px;
+  max-height: calc(100vh - 185px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--grau-mittel) transparent;
+}
+.pendenz-sidebar-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  padding: 8px 6px;
+  border-radius: 5px;
+  color: var(--weiss);
+  cursor: pointer;
+  text-align: center;
+  word-break: break-word;
+  overflow: hidden;
+  transition: opacity 0.15s, transform 0.1s;
+  &:hover { opacity: 0.78; transform: translateX(2px); }
+  // Grouped mode (Ressort / Zuständig): gray default, red when active
+  &--group { background-color: var(--grau-dunkel); }
+  &--group.active { background-color: var(--rot) !important; }
+}
+.psb-id {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.3;
+  display: block;
+}
+.psb-label {
+  font-size: 13px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.psb-count {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  opacity: 0.75;
+  margin-top: 3px;
+}
+.pendenz-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── SETTINGS MODAL ─────────────────────────────────── */
+.modal-header { background: var(--rot); color: var(--weiss); }
+.modal-header .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+.modal-title { font-size: 15px; font-weight: bold; }
+.settings-list-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.settings-logo-preview {
+  margin-bottom: 12px; min-height: 36px; display: flex; align-items: center; gap: 12px;
+  img { max-height: 70px; max-width: 180px; object-fit: contain; border: 1px solid var(--grau-hell); border-radius: 4px; padding: 4px; }
+}
+.pendenz-badge { display: inline-block; background: var(--dunkel); color: var(--weiss); border-radius: 8px; padding: 0 6px; font-size: 11px; font-weight: 600; }
+
+/* ── STATUS BAR ─────────────────────────────────────── */
+.status-bar {
+  position: fixed; bottom: 12px; right: 16px; background: var(--dunkel);
+  color: var(--weiss); padding: 6px 14px; border-radius: 20px;
+  font-size: 11px; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; z-index: 200;
+  &.show { opacity: 1; }
+}
+
+/* ── MARKDOWN PREVIEW ───────────────────────────────── */
+.eintrag-text {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--grau-mittel);
+  border-radius: 4px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  min-height: 36px;
+  background: var(--weiss);
+  &:focus {
+    border-color: var(--rot);
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(139,31,31,0.15);
+  }
+}
+.eintrag-preview {
+  border: 1px solid var(--grau-mittel); border-radius: 4px;
+  padding: 7px 10px; font-size: 13px; background: var(--weiss);
+  min-height: 36px; width: 100%; box-sizing: border-box; cursor: text;
+  p { margin: 0 0 4px; &:last-child { margin-bottom: 0; } }
+  ul, ol { margin: 0 0 4px; padding-left: 18px; }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  &:empty::before { content: 'Klicken zum Bearbeiten…'; color: var(--grau-mittel); font-style: italic; }
+}
+.eintrag-preview-clickable { cursor: text; }
+
+/* ── PENDENZ ADD BTN ────────────────────────────────── */
+.pendenz-add-btn {
+  background: var(--weiss); border: 2px dashed var(--rot);
+  border-radius: 6px; padding: 16px; text-align: center;
+  cursor: pointer; color: var(--rot); font-weight: bold; font-size: 14px;
+  transition: all 0.2s; width: 100%;
+  &:hover { background: var(--rot); color: var(--weiss); }
+}
+
+/* ── CDK DRAG ───────────────────────────────────────── */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14);
+  background: var(--weiss);
+  td { border: 1px solid var(--grau-hell); padding: 4px 6px; }
+}
+.cdk-drag-placeholder { opacity: 0.3; }
+.cdk-drag-animating { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }
+.cdk-drop-list-dragging tr:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }
+
+/* ── AUTOCOMPLETE ───────────────────────────────────── */
+.autocomplete-wrapper { position: relative; }
+.autocomplete-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--weiss); border: 1px solid var(--grau-mittel);
+  border-top: none; border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12); z-index: 500;
+  max-height: 200px; overflow-y: auto;
+}
+.autocomplete-item {
+  padding: 6px 10px; cursor: pointer; font-size: 12px;
+  &:hover, &.active { background: var(--grau-hell); }
+}
+
+/* ── PRINT / PDF ────────────────────────────────────── */
+.print-view { display: none; background: var(--weiss); width: 210mm; }
+.print-page {
+  width: 210mm; padding: 18mm 18mm 16mm 18mm; margin: 0 auto;
+  background: var(--weiss); font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000;
+}
+.print-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 3px solid var(--rot); padding-bottom: 12px; }
+.print-title { h1 { font-size: 28pt; font-weight: 900; color: var(--rot); line-height: 1; } h2 { font-size: 14pt; font-weight: 400; color: var(--dunkel); margin-top: 4px; } }
+.print-logo { max-height: 80px; max-width: 160px; object-fit: contain; }
+.print-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.print-info-box { .label { font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--rot); margin-bottom: 2px; border-bottom: 1px solid var(--rot); padding-bottom: 2px; } .value { font-size: 10pt; } }
+.print-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9.5pt; th { background: var(--rot); color: var(--weiss); padding: 4px 8px; text-align: left; font-size: 8.5pt; } td { padding: 3px 8px; border-bottom: 1px solid var(--grau-hell); } tr:nth-child(even) td { background: var(--grau-hell); } }
+.print-table-title { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--rot); border-bottom: 1px solid var(--rot); padding-bottom: 2px; margin-bottom: 4px; }
+.print-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px; padding-top: 12px; }
+.print-sig-line { border-top: 1px solid var(--dunkel); margin-top: 40px; padding-top: 3px; font-size: 8.5pt; color: var(--grau-dunkel); }
+.print-pendenz { margin-bottom: 16px; border-left: 5px solid var(--rot); break-inside: avoid; page-break-inside: avoid; &.erledigt { border-left-color: var(--blau); } }
+.print-pendenz-header { background: var(--rot); color: var(--weiss); padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10pt; .print-pendenz.erledigt & { background: var(--blau); } }
+.print-pendenz-id { font-family: monospace; font-size: 9pt; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 2px; }
+.print-pendenz-meta { display: grid; grid-template-columns: repeat(4, 1fr); font-size: 8.5pt; border: 1px solid var(--grau-mittel); border-top: none; }
+.print-pendenz-meta-item { padding: 4px 8px; border-right: 1px solid var(--grau-mittel); &:last-child { border-right: none; } }
+.print-pendenz-meta-item .k { font-weight: 700; color: var(--grau-dunkel); font-size: 7.5pt; display: block; }
+.print-pendenz-body { padding: 6px 10px; border: 1px solid var(--grau-mittel); border-top: none; font-size: 9pt; }
+.print-eintrag { margin-bottom: 3px; }
+.print-eintrag-datum { font-weight: bold; color: var(--rot); .print-pendenz.erledigt & { color: var(--blau); } }
+.print-eintrag-text { p { display: inline; margin: 0; } ul, ol { margin: 2px 0 2px 16px; } li { margin-bottom: 1px; } }
+
+@media print {
+  .editor-toolbar, .pendenz-toolbar, .pendenz-sidebar { display: none !important; }
+  .print-view { display: block !important; }
+  .print-page { margin: 0; box-shadow: none; }
+  .print-pendenz { break-inside: avoid; }
+}

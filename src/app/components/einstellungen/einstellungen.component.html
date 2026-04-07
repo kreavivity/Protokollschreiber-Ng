@@ -1,0 +1,85 @@
+<div class="modal-header">
+  <h5 class="modal-title">⚙ Einstellungen</h5>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()" title="Schliessen"></button>
+</div>
+
+<ul ngbNav [(activeId)]="activeTab" class="nav-tabs px-3 pt-2">
+  <li [ngbNavItem]="'personen'"><a ngbNavLink>Personenliste</a></li>
+  <li [ngbNavItem]="'ort'"><a ngbNavLink>Sitzungsorte</a></li>
+  <li [ngbNavItem]="'logo'"><a ngbNavLink>Logo</a></li>
+</ul>
+
+<div class="modal-body">
+
+  <!-- Personenliste -->
+  @if (activeTab === 'personen') {
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered settings-personen-table">
+        <thead class="table-light">
+          <tr>
+            <th>Vorname</th>
+            <th>Nachname</th>
+            <th>Kürzel</th>
+            <th>Funktion/Ressort</th>
+            <th style="width:80px;">Pend.</th>
+            <th style="width:48px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of state.settings.personen; track $index; let i = $index) {
+            <tr>
+              <td><input type="text" class="form-control form-control-sm" [value]="p.vorname"
+                (change)="updatePerson(i, 'vorname', $any($event.target).value)"></td>
+              <td><input type="text" class="form-control form-control-sm" [value]="p.nachname"
+                (change)="updatePerson(i, 'nachname', $any($event.target).value)"></td>
+              <td><input type="text" class="form-control form-control-sm" [value]="p.kuerzel"
+                (change)="updatePerson(i, 'kuerzel', $any($event.target).value)"></td>
+              <td><input type="text" class="form-control form-control-sm" [value]="p.funktion"
+                (change)="updatePerson(i, 'funktion', $any($event.target).value)"></td>
+              <td class="text-center align-middle">
+                <span class="pendenz-badge">{{ getPendenzCount(p.kuerzel) }}</span>
+              </td>
+              <td class="text-center align-middle">
+                <button class="btn btn-sm btn-outline-danger" (click)="removePerson(i)">✕</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-add" (click)="addPerson()">+ Person hinzufügen</button>
+  }
+
+  <!-- Sitzungsorte -->
+  @if (activeTab === 'ort') {
+    @for (o of state.settings.orte; track $index; let i = $index) {
+      <div class="settings-list-item">
+        <input type="text" class="form-control form-control-sm" [value]="o"
+          (change)="updateOrt(i, $any($event.target).value)">
+        <button class="btn btn-sm btn-outline-danger" (click)="removeOrt(i)">✕</button>
+      </div>
+    }
+    <button class="btn-add" (click)="addOrt()">+ Ort hinzufügen</button>
+  }
+
+  <!-- Logo -->
+  @if (activeTab === 'logo') {
+    <div class="settings-logo-preview">
+      @if (state.meta.logo) {
+        <img [src]="state.meta.logo" alt="Logo">
+        <span class="text-muted small">Logo geladen</span>
+      } @else {
+        <span class="text-muted small">Kein Logo</span>
+      }
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <button class="btn btn-sm btn-outline-secondary" (click)="logoInput.click()">Logo ändern…</button>
+      @if (state.meta.logo) {
+        <button class="btn btn-sm btn-outline-danger" (click)="removeLogo()">Logo entfernen</button>
+      }
+    </div>
+    <input #logoInput type="file" accept="image/jpeg,image/png"
+      (change)="loadLogo($event)" style="display:none">
+  }
+
+</div>

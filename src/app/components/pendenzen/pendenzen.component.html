@@ -1,0 +1,156 @@
+<!-- Pendenz Toolbar -->
+<div class="pendenz-toolbar">
+  <div class="container-lg py-2">
+    <div class="mb-2">
+      <div class="input-group input-group-sm" style="width:200px;">
+        <input type="text" class="form-control" [class.border-danger]="searchText"
+          [(ngModel)]="searchText" placeholder="Suche…"
+          ngbTooltip="Suche nach H-Nummer, Titel, Kürzel, Vor-/Nachname der zuständigen Person oder Ressort"
+          placement="bottom" container="body">
+        @if (searchText) {
+          <button class="btn btn-outline-secondary" type="button" (click)="searchText=''"
+            ngbTooltip="Suche leeren" placement="bottom" container="body">✕</button>
+        }
+      </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <button class="btn btn-sm filter-btn"
+        [style.background-color]="isFilterActive('offen') ? 'var(--rot)' : 'var(--weiss)'"
+        [style.border-color]="isFilterActive('offen') ? 'var(--rot)' : ''"
+        [style.color]="isFilterActive('offen') ? 'var(--weiss)' : ''"
+        [class.btn-outline-secondary]="!isFilterActive('offen')"
+        ngbTooltip="Offene Pendenzen ein-/ausblenden" placement="bottom" container="body"
+        (click)="toggleFilter('offen')">
+        Offen <span class="badge ms-1"
+          [style.background-color]="isFilterActive('offen') ? 'var(--weiss)' : 'var(--grau-hell)'"
+          [style.color]="isFilterActive('offen') ? 'var(--rot)' : 'var(--grau-dunkel)'">{{ countByStatus('offen') }}</span>
+      </button>
+      <button class="btn btn-sm filter-btn"
+        [style.background-color]="isFilterActive('erledigt') ? 'var(--blau)' : 'var(--weiss)'"
+        [style.border-color]="isFilterActive('erledigt') ? 'var(--blau)' : ''"
+        [style.color]="isFilterActive('erledigt') ? 'var(--weiss)' : ''"
+        [class.btn-outline-secondary]="!isFilterActive('erledigt')"
+        ngbTooltip="Erledigte Pendenzen ein-/ausblenden" placement="bottom" container="body"
+        (click)="toggleFilter('erledigt')">
+        Erledigt <span class="badge ms-1"
+          [style.background-color]="isFilterActive('erledigt') ? 'var(--weiss)' : 'var(--grau-hell)'"
+          [style.color]="isFilterActive('erledigt') ? 'var(--blau)' : 'var(--grau-dunkel)'">{{ countByStatus('erledigt') }}</span>
+      </button>
+      <button class="btn btn-sm filter-btn"
+        [style.background-color]="isFilterActive('archiviert') ? '' : 'var(--weiss)'"
+        [class.btn-outline-secondary]="!isFilterActive('archiviert')"
+        [class.btn-secondary]="isFilterActive('archiviert')"
+        ngbTooltip="Archivierte Pendenzen ein-/ausblenden" placement="bottom" container="body"
+        (click)="toggleFilter('archiviert')">
+        Archiv <span class="badge ms-1"
+          [style.background-color]="isFilterActive('archiviert') ? 'var(--weiss)' : 'var(--grau-hell)'"
+          [style.color]="'var(--grau-dunkel)'">{{ countByStatus('archiviert') }}</span>
+      </button>
+      <div class="ms-auto d-flex gap-1">
+        <button class="btn btn-sm filter-btn"
+          [style.background-color]="sortBy === 'ressort' ? 'var(--rot)' : 'var(--weiss)'"
+          [style.border-color]="sortBy === 'ressort' ? 'var(--rot)' : ''"
+          [style.color]="sortBy === 'ressort' ? 'var(--weiss)' : ''"
+          [class.btn-outline-secondary]="sortBy !== 'ressort'"
+          [ngbTooltip]="getSortTooltip('ressort')" placement="bottom" container="body"
+          (click)="setSortBy('ressort')">
+          Ressort {{ getSortIcon('ressort') }}
+        </button>
+        <button class="btn btn-sm filter-btn"
+          [style.background-color]="sortBy === 'zustaendig' ? 'var(--rot)' : 'var(--weiss)'"
+          [style.border-color]="sortBy === 'zustaendig' ? 'var(--rot)' : ''"
+          [style.color]="sortBy === 'zustaendig' ? 'var(--weiss)' : ''"
+          [class.btn-outline-secondary]="sortBy !== 'zustaendig'"
+          [ngbTooltip]="getSortTooltip('zustaendig')" placement="bottom" container="body"
+          (click)="setSortBy('zustaendig')">
+          Zuständig {{ getSortIcon('zustaendig') }}
+        </button>
+        <button class="btn btn-sm filter-btn"
+          [style.background-color]="sortBy === 'id' ? 'var(--rot)' : 'var(--weiss)'"
+          [style.border-color]="sortBy === 'id' ? 'var(--rot)' : ''"
+          [style.color]="sortBy === 'id' ? 'var(--weiss)' : ''"
+          [class.btn-outline-secondary]="sortBy !== 'id'"
+          [ngbTooltip]="getSortTooltip('id')" placement="bottom" container="body"
+          (click)="setSortBy('id')">
+          H-Nummer {{ getSortIcon('id') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Layout: Left Sidebar + Main Content -->
+<div class="pendenz-layout" [class.pendenz-layout--has-sidebar]="filteredPendenzen.length > 0">
+
+  <!-- Left Sidebar Badges -->
+  @if (filteredPendenzen.length > 0) {
+    <div class="pendenz-sidebar">
+
+      <!-- ID-Modus: ein Badge pro Pendenz, Farbe nach Status -->
+      @if (sortBy === 'id') {
+        @for (p of filteredPendenzen; track p.id) {
+          <span class="pendenz-sidebar-badge"
+            [style.background-color]="getBadgeColor(p)"
+            [ngbTooltip]="p.id + (p.titel ? ' — ' + p.titel : '')"
+            placement="right" container="body"
+            (click)="scrollToPendenz(p.id)">
+            <span class="psb-id">{{ p.id }}</span>
+            @if (p.titel) {
+              <span class="psb-label">{{ p.titel }}</span>
+            }
+          </span>
+        }
+      }
+
+      <!-- Ressort-Modus: ein Badge pro Ressort, grau / rot wenn aktiv -->
+      @if (sortBy === 'ressort') {
+        @for (g of ressortGroups; track g.ressort) {
+          <span class="pendenz-sidebar-badge pendenz-sidebar-badge--group"
+            [class.active]="isRessortGroupActive(g.ressort)"
+            [ngbTooltip]="g.label" placement="right" container="body"
+            (click)="scrollToPendenz(g.firstId)">
+            <span class="psb-label">{{ g.label }}</span>
+            <span class="psb-count">{{ g.count }}</span>
+          </span>
+        }
+      }
+
+      <!-- Zuständig-Modus: ein Badge pro Person, grau / rot wenn aktiv -->
+      @if (sortBy === 'zustaendig') {
+        @for (g of zustaendigGroups; track g.kuerzel) {
+          <span class="pendenz-sidebar-badge pendenz-sidebar-badge--group"
+            [class.active]="isZustaendigGroupActive(g.kuerzel)"
+            [ngbTooltip]="g.label" placement="right" container="body"
+            (click)="scrollToPendenz(g.firstId)">
+            <span class="psb-label">{{ g.label }}</span>
+            <span class="psb-count">{{ g.count }}</span>
+          </span>
+        }
+      }
+
+    </div>
+  }
+
+  <!-- Pendenz List -->
+  <div class="pendenz-content">
+    <div class="container-lg py-3 pendenz-list-container">
+      @for (p of filteredPendenzen; track p.id) {
+        <div [id]="'pendenz-' + p.id">
+          <app-pendenz-card [pendenz]="p" />
+        </div>
+      }
+      @if (filteredPendenzen.length === 0 && !searchText) {
+        <div class="text-center text-muted py-5">
+          Keine Pendenzen für die aktiven Filter.
+        </div>
+      }
+      @if (isFilterActive('offen')) {
+        <button class="pendenz-add-btn mt-3" (click)="addPendenz()"
+          ngbTooltip="Neue offene Pendenz mit heutigem Datum erstellen" placement="top" container="body">
+          + Neue Pendenz
+        </button>
+      }
+    </div>
+  </div>
+
+</div>

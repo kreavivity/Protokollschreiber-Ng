@@ -1,0 +1,187 @@
+<div class="card mb-3 pendenz-card" [class.erledigt]="isErledigt" [class.archiviert]="isArchiviert">
+
+  <!-- Header -->
+  <div class="card-header pendenz-card-header" (click)="toggleCollapse()">
+    <span class="pendenz-id">{{ pendenz.id }}</span>
+    <input class="pendenz-header-input" type="text" [value]="pendenz.titel"
+      (click)="$event.stopPropagation()"
+      (change)="updateTitel($any($event.target).value)"
+      placeholder="Titel eingeben…"
+      [readonly]="isArchiviert"
+      ngbTooltip="Kurze Bezeichnung der Pendenz"
+      placement="top" container="body">
+    @if (isArchiviert) {
+      <span class="badge badge-archiv badge-header">Archiviert</span>
+    } @else if (isErledigt) {
+      <span class="badge badge-done badge-header">Erledigt</span>
+    } @else {
+      <span class="badge badge-open badge-header">Offen</span>
+    }
+    <span style="opacity:0.7;font-size:12px;flex-shrink:0;">{{ collapsed ? '▶' : '▼' }}</span>
+  </div>
+
+  <div class="card-body" [class.d-none]="collapsed">
+
+    <!-- Meta -->
+    <div class="row g-2 mb-3 pb-3 border-bottom">
+      <div class="col-md-3 col-6">
+        <label class="form-label small fw-semibold text-uppercase text-secondary" style="font-size:10px;">Zuständig</label>
+        @if (!isArchiviert) {
+          <div class="tag-container"
+            ngbTooltip="Kürzel der zuständigen Person. Auswahl aus Vorstand und zentraler Personenliste. Das Ressort wird automatisch aus der Funktion der Person befüllt."
+            placement="top" container="body">
+            @for (val of zustaendigDisplay ? [zustaendigDisplay] : []; track val) {
+              <span class="tag" @badgeSwap>
+                {{ val }}
+                <button class="tag-remove" type="button" tabindex="-1" (click)="clearZustaendig(); $event.stopPropagation()">×</button>
+              </span>
+            }
+            <div style="position:relative;flex:1;min-width:60px;">
+              <input type="text" class="tag-input"
+                [(ngModel)]="zustaendigInputValue"
+                [ngbTypeahead]="searchZustaendig"
+                [resultFormatter]="resultFormatterZustaendig"
+                container="body"
+                (selectItem)="onSelectZustaendig($event)"
+                (focus)="focusZustaendig$.next($any($event.target).value)"
+                (blur)="onBlurZustaendig()"
+                [placeholder]="zustaendigDisplay ? '' : 'Kürzel suchen…'"
+                autocomplete="off">
+            </div>
+          </div>
+        } @else {
+          <input type="text" class="form-control form-control-sm" [value]="pendenz.zustaendig[0] || ''" readonly>
+        }
+      </div>
+      <div class="col-md-3 col-6">
+        <label class="form-label small fw-semibold text-uppercase text-secondary" style="font-size:10px;">Ressort</label>
+        @if (!isArchiviert) {
+          <div class="tag-container"
+            ngbTooltip="Zugewiesenes Ressort. Wird automatisch aus der Funktion der zuständigen Person befüllt, kann aber manuell überschrieben werden. Auswahl aus bestehenden Ressorts."
+            placement="top" container="body">
+            @for (val of ressortDisplay ? [ressortDisplay] : []; track val) {
+              <span class="tag" @badgeSwap>
+                {{ val }}
+                <button class="tag-remove" type="button" tabindex="-1" (click)="clearRessort(); $event.stopPropagation()">×</button>
+              </span>
+            }
+            <div style="position:relative;flex:1;min-width:60px;">
+              <input type="text" class="tag-input"
+                [(ngModel)]="ressortInputValue"
+                [ngbTypeahead]="searchRessort"
+                container="body"
+                (selectItem)="onSelectRessort($event)"
+                (focus)="focusRessort$.next($any($event.target).value)"
+                (blur)="onBlurRessort()"
+                [placeholder]="ressortDisplay ? '' : 'Ressort suchen…'"
+                autocomplete="off">
+            </div>
+          </div>
+        } @else {
+          <input type="text" class="form-control form-control-sm" [value]="pendenz.ressort[0] || ''" readonly>
+        }
+      </div>
+      <div class="col-md-3 col-6">
+        <label class="form-label small fw-semibold text-uppercase text-secondary" style="font-size:10px;">Eröffnet</label>
+        <input type="date" class="form-control form-control-sm" disabled
+          [value]="pendenz.eroeffnet || ''"
+          [class.has-value]="pendenz.eroeffnet"
+          ngbTooltip="Wird automatisch gesetzt: entspricht dem Datum des ältesten Eintrags. Kann nicht bearbeitet werden."
+          placement="top" container="body">
+      </div>
+      <div class="col-md-3 col-6">
+        <label class="form-label small fw-semibold text-uppercase text-secondary" style="font-size:10px;">Erledigt</label>
+        <input type="date" class="form-control form-control-sm" disabled
+          [value]="pendenz.erledigt || ''"
+          [class.has-value]="pendenz.erledigt"
+          ngbTooltip="Wird automatisch gesetzt: entspricht dem Datum des jüngsten Eintrags, wenn die Pendenz als erledigt markiert wurde. Kann nicht bearbeitet werden."
+          placement="top" container="body">
+      </div>
+    </div>
+
+    <!-- Einträge -->
+    <div class="mb-3">
+      @if (!isArchiviert) {
+        <div class="mb-2">
+          <button class="btn-add" (click)="addEintrag()"
+            ngbTooltip="Neuen Eintrag mit heutigem Datum hinzufügen"
+            placement="top" container="body">+ Eintrag hinzufügen</button>
+        </div>
+      }
+
+      @for (item of pagedEntries; track item.originalIndex) {
+        <div class="row g-2 mb-3">
+          <div class="col-md-3 col-12">
+            <div class="d-flex align-items-center mb-1 eintrag-label-row">
+              <label class="form-label small text-secondary mb-0" style="font-size:10px;">Datum</label>
+            </div>
+            <input type="date" class="form-control form-control-sm eintrag-datum"
+              [value]="item.entry.datum ? item.entry.datum.slice(0, 10) : ''"
+              [class.has-value]="item.entry.datum"
+              (change)="updateEintragDatum(item.originalIndex, $any($event.target).value)"
+              [readonly]="isArchiviert"
+              ngbTooltip="Datum des Eintrags. Beeinflusst das Eröffnungs- und Erledigungsdatum der Pendenz."
+              placement="top" container="body">
+          </div>
+          <div class="col-md-9 col-12">
+            <div class="d-flex align-items-center mb-1 eintrag-label-row">
+              <label class="form-label small text-secondary mb-0" style="font-size:10px;">Beschreibung</label>
+              @if (!isArchiviert) {
+                <button class="btn-icon ms-auto" type="button" tabindex="-1"
+                  (click)="removeEintrag(item.originalIndex)"
+                  ngbTooltip="Eintrag löschen (kann kurzzeitig über den Undo-Toast rückgängig gemacht werden)"
+                  placement="top" container="body">✕ Eintrag löschen</button>
+              }
+            </div>
+            <div ngbTooltip="Beschreibung des Eintrags. Markdown wird unterstützt: **fett**, *kursiv*, - Listen, # Überschriften."
+              placement="top" container="body">
+              <app-markdown-preview
+                [value]="item.entry.text"
+                (valueChange)="updateEintragText(item.originalIndex, $event)"
+                [readonly]="isArchiviert" />
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (pendenz.eintraege.length > pageSize) {
+        <div class="d-flex justify-content-center mt-2">
+          <ngb-pagination
+            [(page)]="page"
+            [collectionSize]="pendenz.eintraege.length"
+            [pageSize]="pageSize"
+            [maxSize]="5"
+            [rotate]="true"
+            size="sm" />
+        </div>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 align-items-center pt-2 border-top">
+      @if (!isArchiviert) {
+        @if (!isErledigt) {
+          <button class="btn btn-sm btn-outline-blau" (click)="markErledigt()"
+            ngbTooltip="Markiert die Pendenz als erledigt und setzt das Erledigungsdatum auf den jüngsten Eintrag."
+            placement="top" container="body">✓ Als erledigt markieren</button>
+        } @else {
+          <button class="btn btn-sm btn-outline-secondary" (click)="markOffen()"
+            ngbTooltip="Setzt den Status zurück auf offen und entfernt das Erledigungsdatum."
+            placement="top" container="body">↩ Als offen markieren</button>
+        }
+        <button class="btn btn-sm btn-outline-secondary" (click)="markArchiviert()"
+          ngbTooltip="Archiviert die Pendenz. Archivierte Pendenzen können nicht mehr bearbeitet werden. Offene Pendenzen werden dabei automatisch als erledigt markiert."
+          placement="top" container="body">📁 Archivieren</button>
+      } @else {
+        <button class="btn btn-sm btn-outline-blau" (click)="markErledigt()"
+          ngbTooltip="Stellt die Pendenz aus dem Archiv wieder als erledigt her."
+          placement="top" container="body">↩ Als erledigt wiederherstellen</button>
+      }
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="deletePendenz()"
+        ngbTooltip="Pendenz dauerhaft löschen. Kann über den Undo-Toast rückgängig gemacht werden."
+        placement="top" container="body">✕ Löschen</button>
+    </div>
+
+  </div>
+
+</div>
