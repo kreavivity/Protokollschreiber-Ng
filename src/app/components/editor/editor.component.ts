@@ -90,7 +90,7 @@ export class EditorComponent {
     }
 
     const ref = this.modal.open(ConfirmDialogComponent, { centered: true });
-    ref.componentInstance.title        = 'JSON-Sicherung';
+    ref.componentInstance.title        = 'JSON auch herunterladen?';
     ref.componentInstance.message      = 'Soll zu Sicherungszwecken die JSON-Datei auch heruntergeladen werden?';
     ref.componentInstance.confirmLabel = 'Ja, JSON herunterladen';
     ref.componentInstance.confirmClass = 'btn-secondary';

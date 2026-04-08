@@ -71,11 +71,11 @@ export class PendenzCardComponent implements OnInit, OnChanges {
   }
 
   get pagedEntries(): { entry: PendenzEintrag; originalIndex: number }[] {
-    const reversed = [...this.pendenz.eintraege]
+    const sorted = [...this.pendenz.eintraege]
       .map((e, i) => ({ entry: e, originalIndex: i }))
-      .reverse();
+      .sort((a, b) => (b.entry.datum ?? '').localeCompare(a.entry.datum ?? ''));
     const start = (this.page - 1) * this.pageSize;
-    return reversed.slice(start, start + this.pageSize);
+    return sorted.slice(start, start + this.pageSize);
   }
 
   toggleCollapse(): void {

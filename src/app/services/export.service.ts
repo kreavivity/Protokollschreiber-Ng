@@ -64,7 +64,7 @@ export class ExportService {
       : '';
 
     const content: any[] = [
-      ...this.buildHeader(m, dateStr),
+      ...this.buildHeader(m),
       ...this.buildInfoBlocks(m, dateStr),
       ...this.buildVorstandTable(state),
       ...this.buildGaesteTable(state),
@@ -91,7 +91,7 @@ export class ExportService {
 
   // ─── Header ─────────────────────────────────────────────────────────────────
 
-  private buildHeader(m: AppState['meta'], dateStr: string): any[] {
+  private buildHeader(m: AppState['meta']): any[] {
     const logoSrc = m.logo
       ? (m.logo.startsWith('data:') ? m.logo : `data:image/jpeg;base64,${m.logo}`)
       : null;
@@ -251,7 +251,9 @@ export class ExportService {
     const isErledigt = p.status === 'erledigt' || (!!p.erledigt && !p.archiviert);
     const cardColor  = isErledigt ? BLUE : RED;
 
-    const eintragItems = (p.eintraege || []).map(e => ({
+    const eintragItems = [...(p.eintraege || [])]
+      .sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? ''))
+      .map(e => ({
       columns: [
         { text: (this.formatDate(e.datum || '') || e.datum || '') + ':', bold: true, color: cardColor, width: 'auto', fontSize: 9, margin: [0, 0, 5, 0] },
         { stack: this.markdownToContent(e.text || ''), width: '*', fontSize: 9 }
@@ -342,64 +344,185 @@ export class ExportService {
     });
   }
 
-  // ─── Markdown → pdfmake ─────────────────────────────────────────────────────
-
+  // ─── Markdown → pdfmake (via marked AST) ───────────────────────────────────
+  // DOM Parser konnte die Markdown-Formatierung im Export nicht korrekt darstellen
+  
   private markdownToContent(md: string): any[] {
-    const html   = marked.parse(md) as string;
-    const parser = new DOMParser();
-    const doc    = parser.parseFromString(html, 'text/html');
-    return this.nodesToContent(doc.body.childNodes);
+    const tokens = marked.lexer(md);
+    return this.blockTokens(tokens);
   }
 
-  private nodesToContent(nodes: NodeList): any[] {
+  private blockTokens(tokens: any[]): any[] {
     const result: any[] = [];
-    nodes.forEach(node => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const t = node.textContent?.trim();
-        if (t) result.push({ text: t });
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const el  = node as Element;
-        const tag = el.tagName.toLowerCase();
-        if (tag === 'p') {
-          result.push({ text: this.inlineNodes(el.childNodes), margin: [0, 0, 0, 2] });
-        } else if (tag === 'ul') {
-          result.push({ ul: this.listItems(el), margin: [0, 2, 0, 2] });
-        } else if (tag === 'ol') {
-          result.push({ ol: this.listItems(el), margin: [0, 2, 0, 2] });
-        } else {
-          const t = el.textContent?.trim();
-          if (t) result.push({ text: t });
+    for (const token of tokens) {
+      switch (token.type) {
+        case 'paragraph':
+          result.push(...this.paragraphToBlocks(token.tokens ?? []));
+          break;
+        case 'heading': {
+          const sizes: Record<number, number> = { 1: 13, 2: 11, 3: 10, 4: 9, 5: 9, 6: 9 };
+          result.push({
+            text: this.inlineTokens(token.tokens ?? []),
+            bold: true,
+            fontSize: sizes[token.depth] ?? 9,
+            margin: [0, 4, 0, 2]
+          });
+          break;
         }
+        case 'list':
+          result.push(this.buildList(token));
+          break;
+        case 'hr':
+          result.push({
+            canvas: [{ type: 'line', x1: 0, y1: 0, x2: CONTENT_WIDTH, y2: 0, lineWidth: 0.5, lineColor: GREY_LINE }],
+            margin: [0, 4, 0, 4]
+          });
+          break;
+        case 'blockquote':
+          result.push({ stack: this.blockTokens(token.tokens ?? []), margin: [6, 2, 0, 2], color: GREY_TEXT });
+          break;
+        case 'code':
+          result.push({ text: token.text, fontSize: 8, color: GREY_MID, margin: [0, 2, 0, 2] });
+          break;
+        case 'table': {
+          const alignMap: Record<string, string> = { left: 'left', center: 'center', right: 'right' };
+          const widths = (token.header as any[]).map(() => '*');
+          const headerRow = (token.header as any[]).map((cell: any, i: number) => ({
+            text: this.inlineTokens(cell.tokens ?? []),
+            bold: true,
+            color: WHITE,
+            fillColor: RED,
+            alignment: alignMap[token.align?.[i]] ?? 'left',
+            fontSize: 8.5
+          }));
+          const dataRows = (token.rows as any[][]).map((row, ri) =>
+            row.map((cell: any, i: number) => ({
+              text: this.inlineTokens(cell.tokens ?? []),
+              alignment: alignMap[token.align?.[i]] ?? 'left',
+              fontSize: 8.5,
+              fillColor: ri % 2 !== 0 ? GREY_BG : null
+            }))
+          );
+          result.push({
+            table: { headerRows: 1, widths, body: [headerRow, ...dataRows] },
+            layout: {
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0,
+              hLineColor: () => GREY_LINE,
+              paddingLeft:   () => 6,
+              paddingRight:  () => 6,
+              paddingTop:    () => 3,
+              paddingBottom: () => 3
+            },
+            margin: [0, 2, 0, 4]
+          });
+          break;
+        }
+        case 'space':
+          break;
       }
-    });
+    }
     return result;
   }
 
-  private inlineNodes(nodes: NodeList): any[] {
+  private paragraphToBlocks(tokens: any[]): any[] {
     const result: any[] = [];
-    nodes.forEach(node => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const t = node.textContent;
-        if (t) result.push(t);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const el  = node as Element;
-        const tag = el.tagName.toLowerCase();
-        const inner = this.inlineNodes(el.childNodes);
-        if (tag === 'strong' || tag === 'b') {
-          result.push({ text: inner, bold: true });
-        } else if (tag === 'em' || tag === 'i') {
-          result.push({ text: inner, italics: true });
-        } else {
-          result.push({ text: inner });
-        }
+    let inlineBuffer: any[] = [];
+
+    const flushInline = () => {
+      if (inlineBuffer.length) {
+        result.push({ text: this.inlineTokens(inlineBuffer), margin: [0, 0, 0, 2] });
+        inlineBuffer = [];
       }
-    });
+    };
+
+    for (const token of tokens) {
+      if (token.type === 'image') {
+        flushInline();
+        const href: string = token.href ?? '';
+        if (href.startsWith('data:image')) {
+          result.push({ image: href, width: 200, margin: [0, 2, 0, 4] });
+        } else {
+          result.push({ text: `[Bild: ${token.text || href}]`, color: BLUE, decoration: 'underline', link: href || undefined, margin: [0, 0, 0, 2] });
+        }
+      } else {
+        inlineBuffer.push(token);
+      }
+    }
+    flushInline();
     return result;
   }
 
-  private listItems(el: Element): any[] {
-    return Array.from(el.querySelectorAll('li'))
-      .map(li => ({ text: this.inlineNodes(li.childNodes) }));
+  private buildList(token: any, margin = [0, 2, 0, 2]): any {
+    const items = (token.items as any[]).map((item: any) => {
+      const textTokens = (item.tokens as any[]).filter((t: any) => t.type === 'text');
+      const subLists   = (item.tokens as any[]).filter((t: any) => t.type === 'list');
+
+      const inlineText = this.inlineTokens(
+        textTokens.flatMap((t: any) => t.tokens ?? [{ type: 'text', text: t.text ?? '' }])
+      );
+
+      if (subLists.length === 0) {
+        return { text: inlineText };
+      }
+      return {
+        stack: [
+          { text: inlineText },
+          ...subLists.map((sub: any) => this.buildList(sub, [0, 2, 0, 0]))
+        ]
+      };
+    });
+    return token.ordered
+      ? { ol: items, margin }
+      : { ul: items, margin };
+  }
+
+  private inlineTokens(tokens: any[]): any[] {
+    return tokens.flatMap(t => this.inlineToken(t));
+  }
+
+  private inlineToken(
+    token: any,
+    styles: { bold?: true; italics?: true; decoration?: string; color?: string } = {}
+  ): any[] {
+    switch (token.type) {
+      case 'text':
+      case 'escape': {
+        const t: string = token.text ?? '';
+        if (!t) return [];
+        return [Object.keys(styles).length ? { text: t, ...styles } : t];
+      }
+      case 'strong':
+        return (token.tokens ?? []).flatMap((c: any) => this.inlineToken(c, { ...styles, bold: true }));
+      case 'em':
+        return (token.tokens ?? []).flatMap((c: any) => this.inlineToken(c, { ...styles, italics: true }));
+      case 'del':
+        return (token.tokens ?? []).flatMap((c: any) => this.inlineToken(c, { ...styles, decoration: 'lineThrough' }));
+      case 'link': {
+        const linkText = (token.tokens ?? []).flatMap((c: any) =>
+          this.inlineToken(c, { ...styles, color: BLUE, decoration: 'underline' })
+        );
+        return linkText.map((item: any) =>
+          typeof item === 'string'
+            ? { text: item, color: BLUE, decoration: 'underline', link: token.href }
+            : { ...item, link: token.href }
+        );
+      }
+      case 'codespan':
+        return [{ text: token.text, color: GREY_MID, fontSize: 8, ...styles }];
+      case 'image': {
+        const href: string = token.href ?? '';
+        const alt: string  = token.text || href;
+        if (href.startsWith('data:image')) {
+          return [{ image: href, width: 200, ...styles }];
+        }
+        return [{ text: `[Bild: ${alt}]`, color: BLUE, decoration: 'underline', link: href || undefined, ...styles }];
+      }
+      case 'br':
+        return ['\n'];
+      default:
+        return token.text ? [token.text] : [];
+    }
   }
 
   // ─── Shared Layouts ─────────────────────────────────────────────────────────
