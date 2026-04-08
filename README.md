@@ -25,7 +25,7 @@ Eine Angular-Webanwendung zum Erstellen und Verwalten von Vereinsprotokollen mit
 
 ### Export
 
-- **PDF** — Protokoll und Pendenzenliste als formatiertes Druckdokument (via html2pdf.js)
+- **PDF** — Protokoll und Pendenzenliste als durchsuchbares Text-PDF mit Markdown-Unterstützung (via pdfmake)
 - **JSON** — Vollständige Datensicherung; kann für eine neue Sitzung wiederhergestellt werden
 
 ### Einstellungen
@@ -52,7 +52,7 @@ Eine Angular-Webanwendung zum Erstellen und Verwalten von Vereinsprotokollen mit
 | [Bootstrap](https://getbootstrap.com) | 5 | CSS-Framework |
 | [Angular CDK](https://material.angular.io/cdk) | 21 | Drag & Drop |
 | [marked](https://marked.js.org) | 17 | Markdown-Rendering in Pendenz-Einträgen |
-| [html2pdf.js](https://ekoopmans.github.io/html2pdf.js/) | 0.10 | PDF-Export (via CDN) |
+| [pdfmake](http://pdfmake.org) | 0.3 | PDF-Export (durchsuchbare Text-PDFs) |
 
 ---
 
@@ -72,6 +72,50 @@ ng build
 ```
 
 Build-Artefakte werden im Verzeichnis `dist/` ausgegeben.
+
+---
+
+## Docker
+
+### Image bauen
+
+```bash
+docker build -t protokollschreiber .
+```
+
+### Container starten
+
+```bash
+docker run -p 9430:80 protokollschreiber
+```
+
+### Deployment auf Synology NAS
+
+**1. Image exportieren (PC):**
+
+```bash
+docker save --output protokollschreiber.tar protokollschreiber
+```
+
+**2. Dateien aufs NAS kopieren** (z.B. nach `/volume1/docker/protokollschreiber/`):
+
+```text
+protokollschreiber.tar
+docker-compose.yml
+```
+
+**3. Image importieren** — entweder über SSH:
+
+```bash
+ssh user@nas-ip
+docker load -i /volume1/docker/protokollschreiber/protokollschreiber.tar
+```
+
+…oder im Container Manager unter **Image → Hinzufügen → Von Datei hinzufügen**.
+
+**4. Container starten** — im Container Manager unter **Projekt → Erstellen**, Pfad auf den Ordner mit `docker-compose.yml` setzen.
+
+App unter `http://nas-ip:9430` aufrufen.
 
 ---
 

@@ -1,0 +1,8 @@
+services:
+  protokollschreiber:
+    image: protokollschreiber
+    pull_policy: never
+    container_name: protokollschreiber
+    restart: unless-stopped
+    ports:
+      - "9430:80"
