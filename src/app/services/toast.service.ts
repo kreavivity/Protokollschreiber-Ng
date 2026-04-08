@@ -11,8 +11,10 @@ export interface Toast {
 export class ToastService {
   readonly toasts = signal<Toast[]>([]);
 
-  show(message: string, type: Toast['type'] = 'info', delay = 10000, undoAction?: () => void): void {
-    this.toasts.update(t => [...t, { message, type, delay, undoAction }]);
+  show(message: string, type: Toast['type'] = 'info', delay = 10000, undoAction?: () => void): Toast {
+    const toast: Toast = { message, type, delay, undoAction };
+    this.toasts.update(t => [...t, toast]);
+    return toast;
   }
 
   info(message: string, undoAction?: () => void): void {

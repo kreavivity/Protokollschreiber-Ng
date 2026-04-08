@@ -6,6 +6,7 @@ import { StateService } from '../../services/state.service';
 import { ExportService } from '../../services/export.service';
 import { ToastService } from '../../services/toast.service';
 import { EinstellungenComponent } from '../einstellungen/einstellungen.component';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-editor',
@@ -76,16 +77,27 @@ export class EditorComponent {
     this.toastService.success('JSON wurde erfolgreich heruntergeladen und steht unter Downloads zur Verfügung.');
   }
 
-  async exportPDFAndJSON(): Promise<void> {
-    this.toastService.show('Export läuft – PDF und JSON werden unter Downloads gespeichert…', 'info', 30000);
-    // Event Loop freigeben damit der Toast gerendert wird bevor der Main Thread blockiert
-    await new Promise(resolve => setTimeout(resolve, 50));
+  async exportPDF(): Promise<void> {
+    const loadingToast = this.toastService.show('PDF wird erstellt…', 'info', 30000);
     try {
       await this.exportService.downloadPDF();
-      this.exportService.downloadJSON();
-      this.toastService.success('PDF und JSON wurden erfolgreich heruntergeladen und stehen unter Downloads zur Verfügung.');
+      this.toastService.remove(loadingToast);
+      this.toastService.success('PDF wurde erfolgreich heruntergeladen.');
     } catch (err: any) {
+      this.toastService.remove(loadingToast);
       this.toastService.danger('Fehler bei der PDF-Erstellung: ' + err.message);
+      return;
+    }
+
+    const ref = this.modal.open(ConfirmDialogComponent, { centered: true });
+    ref.componentInstance.title        = 'JSON-Sicherung';
+    ref.componentInstance.message      = 'Soll zu Sicherungszwecken die JSON-Datei auch heruntergeladen werden?';
+    ref.componentInstance.confirmLabel = 'Ja, JSON herunterladen';
+    ref.componentInstance.confirmClass = 'btn-secondary';
+    const confirmed = await ref.result.catch(() => false);
+    if (confirmed) {
+      this.exportService.downloadJSON();
+      this.toastService.success('JSON wurde heruntergeladen.');
     }
   }
 }
