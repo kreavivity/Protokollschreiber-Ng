@@ -16,7 +16,7 @@ Eine Angular-Webanwendung zum Erstellen und Verwalten von Vereinsprotokollen mit
 ### Pendenzen
 
 - Pendenzen mit Titel, Zuständigem, Ressort und chronologischen Einträgen führen
-- Einträge unterstützen Markdown-Formatierung (fett, kursiv, Listen)
+- Pendenz-Einträge unterstützen Markdown-Formatierung (fett, kursiv, durchgestrichen, externe Links, `Code`, Überschriften, Tabellen), sowie Bilder (Einfügen mit Ctrl+V, Grösse per Schieberegler anpassen) und Verlinkungen auf andere Pendenzen (# eintippen und H-Nummer auswählen).
 - Status: offen → erledigt → archiviert
 - Filterung nach Status (Offen, Erledigt, Archiv) mit Zähler-Badge
 - Sortierung nach Ressort, Zuständig oder H-Nummer
@@ -38,7 +38,7 @@ Eine Angular-Webanwendung zum Erstellen und Verwalten von Vereinsprotokollen mit
 
 - **Automatisches Speichern** im Browser-LocalStorage nach jeder Änderung
 - **Undo** — Letzte 5 Änderungen mit `Ctrl+Z` rückgängig machen
-- **Toast-Undo** — Gelöschte Pendenzen und Einträge kurzzeitig wiederherstellen
+- **Toast-Undo** — Gelöschte Pendenzen und Einträge oder Bilder in den Einträgen kurzzeitig wiederherstellen
 - Typeahead für Zuständige und Ressorts
 
 ---

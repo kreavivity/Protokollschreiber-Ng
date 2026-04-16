@@ -11,6 +11,7 @@ const BLUE   = '#1a3a6b';
 const WHITE  = '#ffffff';
 const GREEN  = '#27ae60';
 const RED_SOFT  = '#c0392b';
+const RED_LIGHT = '#f3e9e9';
 const GREY_TEXT = '#666666';
 const GREY_LINE = '#e0e0e0';
 const GREY_BG   = '#f9f9f9';
@@ -348,8 +349,22 @@ export class ExportService {
   // DOM Parser konnte die Markdown-Formatierung im Export nicht korrekt darstellen
   
   private markdownToContent(md: string): any[] {
-    const tokens = marked.lexer(md);
+    const tokens = marked.lexer(this.preprocessPendenzRefs(md));
     return this.blockTokens(tokens);
+  }
+
+  /** Replaces [#H260221] with [(status) H260221: Titel](pref:H260221) so marked
+   *  parses it as a link token that inlineToken() can render as a coloured badge. */
+  private preprocessPendenzRefs(md: string): string {
+    const pendenzen = this.stateService.state().pendenzen;
+    return md.replace(/\[#([A-Z][A-Z0-9]*)\]/g, (_, id: string) => {
+      const p = pendenzen.find(x => x.id === id);
+      const status = p?.status ?? (p?.archiviert ? 'archiviert' : p?.erledigt ? 'erledigt' : 'offen');
+      const label = p
+        ? `(${status}) ${id}${p.titel ? ': ' + p.titel : ''}`
+        : `(?) ${id}`;
+      return `[${label}](pref:${id})`;
+    });
   }
 
   private blockTokens(tokens: any[]): any[] {
@@ -382,7 +397,21 @@ export class ExportService {
           result.push({ stack: this.blockTokens(token.tokens ?? []), margin: [6, 2, 0, 2], color: GREY_TEXT });
           break;
         case 'code':
-          result.push({ text: token.text, fontSize: 8, color: GREY_MID, margin: [0, 2, 0, 2] });
+          result.push({
+            table: {
+              widths: ['*'],
+              body: [[{ text: token.text, fontSize: 8, color: '#000000', fillColor: RED_LIGHT }]]
+            },
+            layout: {
+              hLineWidth: () => 0,
+              vLineWidth: () => 0,
+              paddingLeft:   () => 8,
+              paddingRight:  () => 8,
+              paddingTop:    () => 5,
+              paddingBottom: () => 5
+            },
+            margin: [0, 2, 0, 6]
+          });
           break;
         case 'table': {
           const alignMap: Record<string, string> = { left: 'left', center: 'center', right: 'right' };
@@ -499,6 +528,18 @@ export class ExportService {
       case 'del':
         return (token.tokens ?? []).flatMap((c: any) => this.inlineToken(c, { ...styles, decoration: 'lineThrough' }));
       case 'link': {
+        // Pendenz-Referenz-Badge (aus preprocessPendenzRefs)
+        if ((token.href as string)?.startsWith('pref:')) {
+          const id = (token.href as string).slice(5);
+          const p = this.stateService.state().pendenzen.find(x => x.id === id);
+          const status = p?.status ?? (p?.archiviert ? 'archiviert' : p?.erledigt ? 'erledigt' : 'offen');
+          const bgColor = status === 'archiviert' ? '#aaaaaa'
+                        : status === 'erledigt'   ? '#1a3a6b'
+                        : p                       ? '#8B1F1F'
+                        : '#666666';
+          const label = token.text ?? id;
+          return [{ text: ` ${label} `, color: WHITE, background: bgColor, fontSize: 8.5, ...styles }];
+        }
         const linkText = (token.tokens ?? []).flatMap((c: any) =>
           this.inlineToken(c, { ...styles, color: BLUE, decoration: 'underline' })
         );
@@ -509,7 +550,7 @@ export class ExportService {
         );
       }
       case 'codespan':
-        return [{ text: token.text, color: GREY_MID, fontSize: 8, ...styles }];
+        return [{ text: ` ${token.text} `, fontSize: 8, color: '#000000', background: RED_LIGHT, ...styles }];
       case 'image': {
         const href: string = token.href ?? '';
         const alt: string  = token.text || href;

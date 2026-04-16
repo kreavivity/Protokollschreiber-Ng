@@ -51,6 +51,12 @@ export class EditorComponent {
       const target = event.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
       event.preventDefault();
+      const undoResult = this.toastService.triggerLatestUndo();
+      if (undoResult === 'triggered') return;
+      if (undoResult === 'expired') {
+        this.toastService.info(`Rückgängig machen ist zeitlich limitiert auf ${this.toastService.lastUndoDelaySecs} Sekunden.`);
+        return;
+      }
       if (this.stateService.undo()) {
         this.toastService.info('Letzte Änderung rückgängig gemacht.');
       } else {

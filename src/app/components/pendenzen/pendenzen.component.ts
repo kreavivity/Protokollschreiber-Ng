@@ -217,17 +217,42 @@ export class PendenzenComponent {
     document.getElementById('pendenz-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  addPendenz(): void {
+  addPendenz(insertAfterId?: string | null): void {
     const id = this.stateService.generatePendenzId();
     const today = new Date().toISOString().slice(0, 10);
-    this.stateService.patch(s => {
-      s.pendenzen.push({
-        id, titel: '', zustaendig: [], ressort: [],
-        eroeffnet: today, eintraege: [{ datum: today, text: '' }], status: 'offen'
-      });
-    });
+    const all = this.stateService.state().pendenzen;
+
+    // Determine insert index and inherit ressort from the neighbour above so the
+    // stable sort places the new pendenz right at the clicked position.
+    let insertIdx: number;
+    let ressort: string[] = [];
+
+    if (insertAfterId === null) {
+      // Top divider: insert before the first visible pendenz
+      const firstVisible = this.filteredPendenzen[0];
+      insertIdx = firstVisible ? Math.max(0, all.findIndex(p => p.id === firstVisible.id)) : 0;
+      // Inherit ressort from the first visible pendenz (same group)
+      if (firstVisible?.ressort?.length) ressort = [...firstVisible.ressort];
+    } else if (insertAfterId) {
+      const idx = all.findIndex(p => p.id === insertAfterId);
+      insertIdx = idx >= 0 ? idx + 1 : all.length;
+      // Inherit ressort from the pendenz directly above the divider
+      const above = all.find(p => p.id === insertAfterId);
+      if (above?.ressort?.length) ressort = [...above.ressort];
+    } else {
+      insertIdx = all.length;
+    }
+
+    const newPendenz = {
+      id, titel: '', zustaendig: [], ressort,
+      eroeffnet: today, eintraege: [{ datum: today, text: '' }], status: 'offen' as const
+    };
+    this.stateService.patch(s => { s.pendenzen.splice(insertIdx, 0, newPendenz); });
     setTimeout(() => {
-      document.getElementById('pendenz-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const el = document.getElementById('pendenz-' + id);
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 200;
+      window.scrollTo({ top, behavior: 'smooth' });
     }, 100);
   }
 }

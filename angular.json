@@ -86,6 +86,14 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "prebundle": {
+              "exclude": [
+                "pdfmake/build/pdfmake",
+                "pdfmake/build/vfs_fonts"
+              ]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "protokollschreiber-ng:build:production"

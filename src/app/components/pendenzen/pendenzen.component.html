@@ -134,21 +134,27 @@
   <!-- Pendenz List -->
   <div class="pendenz-content">
     <div class="container-lg py-3 pendenz-list-container">
+      @if (isFilterActive('offen')) {
+        <div class="pendenz-insert-divider" (click)="addPendenz(null)"
+          ngbTooltip="Neue offene Pendenz erstellen" placement="right" container="body">
+          <span class="pendenz-insert-icon">+</span>
+        </div>
+      }
       @for (p of filteredPendenzen; track p.id) {
         <div [id]="'pendenz-' + p.id">
           <app-pendenz-card [pendenz]="p" />
         </div>
+        @if (isFilterActive('offen')) {
+          <div class="pendenz-insert-divider" (click)="addPendenz(p.id)"
+            ngbTooltip="Neue offene Pendenz erstellen" placement="right" container="body">
+            <span class="pendenz-insert-icon">+</span>
+          </div>
+        }
       }
       @if (filteredPendenzen.length === 0 && !searchText) {
         <div class="text-center text-muted py-5">
           Keine Pendenzen für die aktiven Filter.
         </div>
-      }
-      @if (isFilterActive('offen')) {
-        <button class="pendenz-add-btn mt-3" (click)="addPendenz()"
-          ngbTooltip="Neue offene Pendenz mit heutigem Datum erstellen" placement="top" container="body">
-          + Neue Pendenz
-        </button>
       }
     </div>
   </div>

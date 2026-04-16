@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NgbModal, NgbPaginationModule, NgbTooltipModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject, merge } from 'rxjs';
+import { Router } from '@angular/router';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { Pendenz, PendenzEintrag } from '../../../models/state.model';
@@ -46,7 +47,8 @@ export class PendenzCardComponent implements OnInit, OnChanges {
     public stateService: StateService,
     public personenService: PersonenService,
     private toastService: ToastService,
-    private modal: NgbModal
+    private modal: NgbModal,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -116,13 +118,16 @@ export class PendenzCardComponent implements OnInit, OnChanges {
   onSelectZustaendig(event: any): void {
     event.preventDefault();
     const kuerzel = event.item as string;
+    const ressortEmpty = this.pendenz.ressort.length === 0;
     this.zustaendigDisplay = kuerzel;
     this.zustaendigInputValue = '';
     this.updateZustaendig([kuerzel]);
-    const funktion = this.personenService.getPersonFunktion(kuerzel);
-    if (funktion) {
-      this.ressortDisplay = funktion;
-      this.updateRessort([funktion]);
+    if (ressortEmpty) {
+      const funktion = this.personenService.getPersonFunktion(kuerzel);
+      if (funktion) {
+        this.ressortDisplay = funktion;
+        this.updateRessort([funktion]);
+      }
     }
   }
 
@@ -130,12 +135,15 @@ export class PendenzCardComponent implements OnInit, OnChanges {
     setTimeout(() => {
       const entered = this.zustaendigInputValue.trim();
       if (entered && this.personenService.isValidKuerzel(entered)) {
+        const ressortEmpty = this.pendenz.ressort.length === 0;
         this.zustaendigDisplay = entered;
         this.updateZustaendig([entered]);
-        const funktion = this.personenService.getPersonFunktion(entered);
-        if (funktion) {
-          this.ressortDisplay = funktion;
-          this.updateRessort([funktion]);
+        if (ressortEmpty) {
+          const funktion = this.personenService.getPersonFunktion(entered);
+          if (funktion) {
+            this.ressortDisplay = funktion;
+            this.updateRessort([funktion]);
+          }
         }
       }
       this.zustaendigInputValue = '';
@@ -231,6 +239,7 @@ export class PendenzCardComponent implements OnInit, OnChanges {
     const toastService = this.toastService;
     toastService.info(`Eintrag vom ${snapshot.datum || '–'} wurde gelöscht.`, () => {
       this.patch(p => { p.eintraege.splice(idx, 0, snapshot); this.recalcDates(p); });
+      this.page = 1;
       toastService.info(`Eintrag vom ${snapshot.datum || '–'} wurde wiederhergestellt.`);
     });
   }
@@ -241,5 +250,35 @@ export class PendenzCardComponent implements OnInit, OnChanges {
 
   updateEintragText(idx: number, value: string): void {
     this.patch(p => { p.eintraege[idx].text = value; this.recalcDates(p); });
+  }
+
+  copyId(event: MouseEvent): void {
+    event.stopPropagation();
+    navigator.clipboard.writeText(this.pendenz.id).then(() => {
+      this.toastService.info(`${this.pendenz.id} in Zwischenspeicher kopiert.`);
+    });
+  }
+
+  navigateToPendenz(id: string): void {
+    const scroll = () => setTimeout(() => {
+      const el = document.getElementById('pendenz-' + id);
+      if (!el) return;
+      const offset = 200; // compensate for sticky editor + pendenz toolbars
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 100);
+    if (this.router.url.includes('/pendenzen')) {
+      scroll();
+    } else {
+      this.router.navigate(['/editor', 'pendenzen']).then(scroll);
+    }
+  }
+
+  onImageDeleted(idx: number, oldValue: string): void {
+    const toastService = this.toastService;
+    toastService.info('Bild gelöscht.', () => {
+      this.patch(p => { p.eintraege[idx].text = oldValue; });
+      toastService.info('Bild wiederhergestellt.');
+    });
   }
 }

@@ -2,7 +2,10 @@
 
   <!-- Header -->
   <div class="card-header pendenz-card-header" (click)="toggleCollapse()">
-    <span class="pendenz-id">{{ pendenz.id }}</span>
+    <span class="pendenz-id pendenz-id-copy" role="button"
+      (click)="copyId($event)"
+      ngbTooltip="ID kopieren"
+      placement="top" container="body">{{ pendenz.id }}</span>
     <input class="pendenz-header-input" type="text" [value]="pendenz.titel"
       (click)="$event.stopPropagation()"
       (change)="updateTitel($any($event.target).value)"
@@ -36,7 +39,7 @@
                 <button class="tag-remove" type="button" tabindex="-1" (click)="clearZustaendig(); $event.stopPropagation()">×</button>
               </span>
             }
-            <div style="position:relative;flex:1;min-width:60px;">
+            <div style="position:relative;flex:1;min-width:0;">
               <input type="text" class="tag-input"
                 [(ngModel)]="zustaendigInputValue"
                 [ngbTypeahead]="searchZustaendig"
@@ -65,7 +68,7 @@
                 <button class="tag-remove" type="button" tabindex="-1" (click)="clearRessort(); $event.stopPropagation()">×</button>
               </span>
             }
-            <div style="position:relative;flex:1;min-width:60px;">
+            <div style="position:relative;flex:1;min-width:0;">
               <input type="text" class="tag-input"
                 [(ngModel)]="ressortInputValue"
                 [ngbTypeahead]="searchRessort"
@@ -102,10 +105,12 @@
     <!-- Einträge -->
     <div class="mb-3">
       @if (!isArchiviert) {
-        <div class="mb-2">
-          <button class="btn-add" (click)="addEintrag()"
-            ngbTooltip="Neuen Eintrag mit heutigem Datum hinzufügen"
-            placement="top" container="body">+ Eintrag hinzufügen</button>
+        <div class="row g-2 mb-2">
+          <div class="col-md-3 col-6">
+            <button class="btn-add w-100" (click)="addEintrag()"
+              ngbTooltip="Neuen Eintrag mit heutigem Datum hinzufügen"
+              placement="top" container="body">+ Eintrag hinzufügen</button>
+          </div>
         </div>
       }
 
@@ -133,11 +138,13 @@
                   placement="top" container="body">✕ Eintrag löschen</button>
               }
             </div>
-            <div ngbTooltip="Beschreibung des Eintrags. Markdown wird unterstützt: **fett**, *kursiv*, - Listen, # Überschriften."
+            <div ngbTooltip="Beschreibung des Eintrags. Unterstützt Markdown (**fett**, *kursiv*, ~~durchgestrichen~~, [Links](https://www.google.com), `Code`, - Listen, # Überschriften, | Tabellen), Bilder (Einfügen per Ctrl+V, Grösse per Schieberegler anpassbar) sowie Verlinkungen auf andere Pendenzen (# tippen und H-Nummer auswählen)."
               placement="top" container="body">
               <app-markdown-preview
                 [value]="item.entry.text"
                 (valueChange)="updateEintragText(item.originalIndex, $event)"
+                (imageDeleted)="onImageDeleted(item.originalIndex, $event)"
+                (pendenzRefClicked)="navigateToPendenz($event)"
                 [readonly]="isArchiviert" />
             </div>
           </div>
