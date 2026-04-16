@@ -65,7 +65,7 @@ export class PendenzCardComponent implements OnInit, OnChanges {
   }
 
   get isArchiviert(): boolean {
-    return this.pendenz.status === 'archiviert' || !!this.pendenz.archiviert;
+    return this.pendenz.status === 'archiviert';
   }
 
   get isErledigt(): boolean {
@@ -183,7 +183,7 @@ export class PendenzCardComponent implements OnInit, OnChanges {
   // ── Aktionen ─────────────────────────────────────────
   markErledigt(): void {
     const wasArchiviert = this.isArchiviert;
-    this.patch(p => { p.status = 'erledigt'; p.archiviert = false; this.recalcDates(p); });
+    this.patch(p => { p.status = 'erledigt'; this.recalcDates(p); });
     this.toastService.success(
       wasArchiviert
         ? `Pendenz ${this.pendenz.id} wurde als erledigt wiederhergestellt.`
@@ -197,7 +197,7 @@ export class PendenzCardComponent implements OnInit, OnChanges {
   }
 
   markArchiviert(): void {
-    this.patch(p => { p.status = 'archiviert'; p.archiviert = true; this.recalcDates(p); });
+    this.patch(p => { p.status = 'archiviert'; this.recalcDates(p); });
     this.toastService.info(`Pendenz ${this.pendenz.id} wurde archiviert.`);
   }
 

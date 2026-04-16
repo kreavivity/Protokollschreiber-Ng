@@ -31,7 +31,6 @@ export interface Pendenz {
   erledigt?: string;
   eintraege: PendenzEintrag[];
   status?: PendenzStatus;
-  archiviert?: boolean;
 }
 
 export interface MetaDaten {

@@ -45,10 +45,7 @@ export class PendenzenComponent {
   }
 
   getStatus(p: Pendenz): FilterStatus {
-    if (p.status) return p.status;
-    if (p.archiviert) return 'archiviert';
-    if (p.erledigt) return 'erledigt';
-    return 'offen';
+    return p.status ?? 'offen';
   }
 
   setSortBy(key: SortKey): void {

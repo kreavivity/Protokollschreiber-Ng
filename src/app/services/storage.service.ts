@@ -28,7 +28,7 @@ export class StorageService {
     const s: any = JSON.parse(JSON.stringify(state));
     delete s._uiState;
     if (s.settings) delete s.settings.logo;
-    return s;
+return s;
   }
 
   migrate(raw: any): AppState {
@@ -79,6 +79,7 @@ export class StorageService {
         else if (p.erledigt) p.status = 'erledigt';
         else p.status = 'offen';
       }
+      delete p.archiviert;
     });
 
     return s;

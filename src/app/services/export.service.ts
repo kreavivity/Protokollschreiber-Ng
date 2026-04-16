@@ -236,7 +236,7 @@ export class ExportService {
 
   private buildPendenzenSection(state: AppState): any[] {
     const aktive = (state.pendenzen || [])
-      .filter(p => p.status !== 'archiviert' && !p.archiviert);
+      .filter(p => p.status !== 'archiviert');
 
     if (!aktive.length) return [];
 
@@ -249,7 +249,7 @@ export class ExportService {
   }
 
   private buildPendenzCard(p: Pendenz): any {
-    const isErledigt = p.status === 'erledigt' || (!!p.erledigt && !p.archiviert);
+    const isErledigt = p.status === 'erledigt';
     const cardColor  = isErledigt ? BLUE : RED;
 
     const eintragItems = [...(p.eintraege || [])]
@@ -359,7 +359,7 @@ export class ExportService {
     const pendenzen = this.stateService.state().pendenzen;
     return md.replace(/\[#([A-Z][A-Z0-9]*)\]/g, (_, id: string) => {
       const p = pendenzen.find(x => x.id === id);
-      const status = p?.status ?? (p?.archiviert ? 'archiviert' : p?.erledigt ? 'erledigt' : 'offen');
+      const status = p?.status ?? 'offen';
       const label = p
         ? `(${status}) ${id}${p.titel ? ': ' + p.titel : ''}`
         : `(?) ${id}`;
@@ -532,7 +532,7 @@ export class ExportService {
         if ((token.href as string)?.startsWith('pref:')) {
           const id = (token.href as string).slice(5);
           const p = this.stateService.state().pendenzen.find(x => x.id === id);
-          const status = p?.status ?? (p?.archiviert ? 'archiviert' : p?.erledigt ? 'erledigt' : 'offen');
+          const status = p?.status ?? 'offen';
           const bgColor = status === 'archiviert' ? '#aaaaaa'
                         : status === 'erledigt'   ? '#1a3a6b'
                         : p                       ? '#8B1F1F'

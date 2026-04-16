@@ -119,6 +119,7 @@ input[type="date"].has-value::-webkit-datetime-edit { color: var(--text); }
 .section-card.collapsed .section-toggle { transform: rotate(-90deg); }
 
 /* ── MEMBER TABLE ───────────────────────────────────── */
+.member-table tbody tr:nth-child(even) td { background: rgba(31, 73, 125, 0.06); }
 .member-table td input,
 .member-table td select {
   border: none;

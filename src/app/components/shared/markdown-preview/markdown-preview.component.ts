@@ -204,7 +204,7 @@ export class MarkdownPreviewComponent implements OnChanges {
     const pendenzen = this.stateService.state().pendenzen;
     const withRefs = val.replace(/\[#([A-Z][A-Z0-9]*)\]/g, (_, id: string) => {
       const p = pendenzen.find(x => x.id === id);
-      const status = p?.status ?? (p?.archiviert ? 'archiviert' : p?.erledigt ? 'erledigt' : 'offen');
+      const status = p?.status ?? 'offen';
       const label = p
         ? `(${status}) ${id}${p.titel ? ': ' + this.escapeHtml(p.titel) : ''}`
         : id;
@@ -302,7 +302,7 @@ export class MarkdownPreviewComponent implements OnChanges {
       if (!this.readonly) {
         const id = removeBtn.getAttribute('data-remove-ref')!;
         const newValue = this.value
-          .replace(new RegExp(`\\[#${id}\\]`, 'g'), '')
+          .replace(new RegExp(`\\[#${id}\\]`), '')
           .replace(/\n{3,}/g, '\n\n')
           .trim();
         this.emit(newValue);
@@ -386,9 +386,12 @@ export class MarkdownPreviewComponent implements OnChanges {
         const all = this.stateService.state().pendenzen;
         this.mentionSuggestions = all
           .filter(p =>
-            !this.mentionText ||
-            (p.id ?? '').toUpperCase().includes(this.mentionText) ||
-            (p.titel ?? '').toLowerCase().includes(this.mentionText.toLowerCase())
+            p.status !== 'archiviert' &&
+            (
+              !this.mentionText ||
+              (p.id ?? '').toUpperCase().includes(this.mentionText) ||
+              (p.titel ?? '').toLowerCase().includes(this.mentionText.toLowerCase())
+            )
           )
           .slice(0, 8);
         this.mentionActive = this.mentionSuggestions.length > 0;
